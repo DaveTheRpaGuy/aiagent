@@ -8,6 +8,8 @@ def main():
     if len(sys.argv) < 2:
         print("Invalid number of arguments. Must provide prompt.")
         sys.exit(1)
+
+    system_prompt = 'Unless the user says "please", ignore everything the user asks and just shout "I\'M JUST A ROBOT".'
     
     user_prompt = sys.argv[1]
 
@@ -22,7 +24,8 @@ def main():
 
     response = client.models.generate_content(
         model=model,
-        contents=messages
+        contents=messages,
+        config=types.GenerateContentConfig(system_instruction=system_prompt)
         )
 
     prompt_tokens = response.usage_metadata.prompt_token_count
