@@ -1,5 +1,6 @@
 import os
 import subprocess
+from google.genai import types
 
 def run_python_file(working_directory, file_path, args=[]):
     full_path = os.path.abspath(os.path.join(working_directory, file_path))
@@ -21,3 +22,26 @@ def run_python_file(working_directory, file_path, args=[]):
     if stdout == "" and stderr == "":
         return "No output produced."
     return f"STDOUT:\n{stdout}\nSTDERR:\n{stderr}"
+
+
+schema_run_python_file = types.FunctionDeclaration(
+    name="run_python_file",
+    description="Runs the Python code contained in the file and returns the result, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The file path to the file containing the Python code, relative to the working directory.",
+            ),
+            "args": types.Schema(
+                type=types.Type.ARRAY,
+                description="An array of optional arguments",
+                items=types.Schema(
+                    type=types.Type.STRING,
+                    description="A single command-line argument."
+                ),
+            ),
+        },
+    ),
+)

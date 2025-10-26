@@ -1,4 +1,5 @@
 import os
+from google.genai import types
 
 # not sure how to reference a config file that is upward in directory hierarchy
 FILE_CHARACTER_LIMIT = 10000
@@ -26,3 +27,17 @@ def get_file_content(working_directory, file_path):
 #os.path.join: Join two paths together safely (handles slashes)
 #.startswith: Check if a string starts with a specific substring
 #os.path.isfile: Check if a path is a file
+
+schema_get_file_content = types.FunctionDeclaration(
+    name="get_file_content",
+    description="Returns the string content of a file, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The file path to get string content from, relative to the working directory.",
+            ),
+        },
+    ),
+)
