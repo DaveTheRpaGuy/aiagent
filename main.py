@@ -49,31 +49,58 @@ def main():
         ]
     )
 
-    response = client.models.generate_content(
-        model=model,
-        contents=messages,
-        config=types.GenerateContentConfig(
-            tools=[available_functions], system_instruction=system_prompt),
-        )
+    iters = 0
+    while iters < 20:
+        iters+=1
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=messages,
+                config=types.GenerateContentConfig(
+                    tools=[available_functions], system_instruction=system_prompt),
+                )
+        except Exception as e:
+            print(f"Generate Content error: {e}")
+            break
+        
+        if response.text and not response.function_calls:
+            print(f"response.text: {response.text}")
+            break
+        else:
+            for candidate in response.candidates:
+                messages.append(candidate.content)
 
-    prompt_tokens = response.usage_metadata.prompt_token_count
-    response_tokens = response.usage_metadata.candidates_token_count
-    if response.function_calls:
-        for function_call_part in response.function_calls:
-            print(f"Calling function: {function_call_part.name}({function_call_part.args})")
-            function_call_result = call_function(function_call_part, verbose)
-            if not function_call_result.parts[0].function_response.response:
-                raise Exception("Fatal: function_call_result.parts[0].function_response.response not found")
-            if verbose:
-                print(f"-> {function_call_result.parts[0].function_response.response}")
-    else:
-        print(f"Response text: {response.text}")
+            if not response.usage_metadata:
+                raise RuntimeError("Gemini API response appears to be malformed")
+            prompt_tokens = response.usage_metadata.prompt_token_count
+            response_tokens = response.usage_metadata.candidates_token_count
 
-    if verbose:
-        print(f"User prompt: {user_prompt}")
-        print(f"Prompt tokens: {prompt_tokens}")
-        print(f"Response tokens: {response_tokens}")
+            if response.function_calls:
+                function_responses = []
+                for function_call_part in response.function_calls:
+                    print(f"Calling function: {function_call_part.name}({function_call_part.args})")
+                    function_call_result = call_function(function_call_part, verbose)
+                    if not function_call_result.parts[0].function_response.response:
+                        raise Exception("Fatal: function_call_result.parts[0].function_response.response not found")
+                    if verbose:
+                        print(f"-> {function_call_result.parts[0].function_response.response}")
+                    function_responses.append(function_call_result.parts[0])
+                messages.append(
+                    types.Content(
+                        role="user",
+                        parts=function_responses
+                    )
+                )
+            else:
+                print(f"Response text: {response.text}")
 
+        if verbose:
+            print(f"User prompt: {user_prompt}")
+            print(f"Prompt tokens: {prompt_tokens}")
+            print(f"Response tokens: {response_tokens}")
+
+    if iters >= 20:
+        print("Maximum iterations (20) reached.")
 
 if __name__ == "__main__":
     main()
