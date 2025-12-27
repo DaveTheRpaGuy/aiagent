@@ -10,9 +10,9 @@ from functions.write_file import schema_write_file
 from functions.call_function import call_function
 
 def main():
-    if len(sys.argv) < 2:
-        print("Invalid number of arguments. Must provide prompt.")
-        sys.exit(1)
+    #if len(sys.argv) < 2:
+    #    print("Invalid number of arguments. Must provide prompt.")
+    #    sys.exit(1)
 
     system_prompt = """
         You are a helpful AI coding agent.
@@ -27,12 +27,18 @@ def main():
         All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
         """
     
-    user_prompt = sys.argv[1]
+    # TODO -- fix
+    MAX_ITERS = 5
 
+    user_prompt = sys.argv[1]
+    
     verbose = "--verbose" in sys.argv
 
     load_dotenv()
     api_key = os.environ.get("GEMINI_API_KEY")
+    if api_key == None or api_key == "":
+        raise RuntimeError("API Key is empty")
+    
     client = genai.Client(api_key=api_key)
     model = "gemini-2.0-flash-001"
 
@@ -50,7 +56,7 @@ def main():
     )
 
     iters = 0
-    while iters < 20:
+    while iters < MAX_ITERS:
         iters+=1
         try:
             response = client.models.generate_content(
@@ -92,15 +98,15 @@ def main():
                     )
                 )
             else:
-                print(f"Response text: {response.text}")
+                print(f"Response: {response.text}")
 
         if verbose:
             print(f"User prompt: {user_prompt}")
             print(f"Prompt tokens: {prompt_tokens}")
             print(f"Response tokens: {response_tokens}")
 
-    if iters >= 20:
-        print("Maximum iterations (20) reached.")
+    if iters >= MAX_ITERS:
+        print(f"Maximum iterations ({MAX_ITERS}) reached.")
 
 if __name__ == "__main__":
     main()
