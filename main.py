@@ -10,9 +10,9 @@ from functions.write_file import schema_write_file
 from functions.call_function import call_function
 
 def main():
-    #if len(sys.argv) < 2:
-    #    print("Invalid number of arguments. Must provide prompt.")
-    #    sys.exit(1)
+    if len(sys.argv) < 2:
+        print("Invalid number of arguments. Must provide prompt.")
+        sys.exit(1)
 
     system_prompt = """
         You are a helpful AI coding agent.
@@ -27,7 +27,6 @@ def main():
         All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
         """
     
-    # TODO -- fix
     MAX_ITERS = 5
 
     user_prompt = sys.argv[1]
@@ -70,7 +69,11 @@ def main():
             break
         
         if response.text and not response.function_calls:
-            print(f"response.text: {response.text}")
+            prompt_tokens = response.usage_metadata.prompt_token_count
+            response_tokens = response.usage_metadata.candidates_token_count
+            print(f"Prompt tokens: {prompt_tokens}")
+            print(f"Response tokens: {response_tokens}")
+            print(f"Response: {response.text}")
             break
         else:
             for candidate in response.candidates:
@@ -78,8 +81,7 @@ def main():
 
             if not response.usage_metadata:
                 raise RuntimeError("Gemini API response appears to be malformed")
-            prompt_tokens = response.usage_metadata.prompt_token_count
-            response_tokens = response.usage_metadata.candidates_token_count
+            
 
             if response.function_calls:
                 function_responses = []
@@ -100,11 +102,10 @@ def main():
             else:
                 print(f"Response: {response.text}")
 
-        if verbose:
-            print(f"User prompt: {user_prompt}")
-            print(f"Prompt tokens: {prompt_tokens}")
-            print(f"Response tokens: {response_tokens}")
-
+    if verbose:
+        # TODO - fix
+        print("verbose not yet handled")
+        
     if iters >= MAX_ITERS:
         print(f"Maximum iterations ({MAX_ITERS}) reached.")
 
